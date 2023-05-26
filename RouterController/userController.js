@@ -13,8 +13,9 @@ const { generateRandomPassword } = require("../middleware/generateRandomPassword
 
 //getting all user to user info;
 
-const  handelgetAllUserToUSer = (req, res) => {
+const  handelGetAlluserSuggestion = (req, res) => {
   try {
+   
     const token = req.headers.authorization;
     jwt.verify(token, process.env.secret_key, (err, Tenantuuid) => {
       if (err) {
@@ -759,5 +760,5 @@ module.exports = {
   userLogin,
   handleGetAllUser,
   handleAssignToColleague,
-  handelgetAllUserToUSer,
+  handelGetAlluserSuggestion,
 };
