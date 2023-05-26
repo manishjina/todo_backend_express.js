@@ -411,8 +411,18 @@ const handleGetTodo = (req, res) => {
                 if (result.length === 0) {
                   return res.send([]);
                 } else {
-                  pool1.release();
-                  res.status(200).send(result);
+                  const totalCountQuery = "SELECT COUNT(*) AS totalCount FROM todo WHERE user_id = ?";
+                  const totalCountValues = [user_id];
+                  pool1.query(totalCountQuery, totalCountValues, (countErr, countResult) => {
+                    if (countErr) {
+                      return res.status(401).send({ error: "Cannot retrieve total count of todos", countErr });
+                    }
+                    const totalCount = countResult[0].totalCount;
+                    const totalPages = Math.ceil(totalCount / limit);
+
+                    pool1.release();
+                    res.status(200).send({ results: result, totalCount, totalPages });
+                  });
                 }
               });
             }
@@ -425,6 +435,7 @@ const handleGetTodo = (req, res) => {
     res.send("error");
   }
 };
+
 
 // to get all todo only admin access
 const handleGetAllTodo = (req, res) => {
@@ -443,23 +454,34 @@ const handleGetAllTodo = (req, res) => {
 
     pool1.getConnection((error, connection) => {
       if (error) {
-        return res
-          .status(401)
-          .send({ error: "error while connecting to the database", error });
+        return res.status(401).send({ error: "Error while connecting to the database", error });
       }
+
       const query = "SELECT * FROM todo LIMIT ? OFFSET ?";
       const values = [parseInt(limit), parseInt(offset)];
+
       connection.query(query, values, (err, results) => {
         connection.release();
         if (err) {
-          return res.status(401).send({ error: "cannot process request", err });
+          return res.status(401).send({ error: "Cannot process request", err });
         }
-        res.send(results);
+
+        // Retrieve the total count of todos
+        connection.query("SELECT COUNT(*) AS totalCount FROM todo", (countErr, countResult) => {
+          if (countErr) {
+            return res.status(401).send({ error: "Cannot retrieve total count of todos", countErr });
+          }
+
+          const totalCount = countResult[0].totalCount;
+          const totalPages = Math.ceil(totalCount / limit);
+
+          res.send({ results, totalCount, totalPages });
+        });
       });
     });
   } catch (error) {
     console.log(error);
-    res.send("error");
+    res.send("Error");
   }
 };
 
