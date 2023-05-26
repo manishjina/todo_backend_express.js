@@ -455,7 +455,8 @@ const createUserTableIfNotExists = (pool1) => {
         email VARCHAR(255),
         password VARCHAR(255),
         role INT DEFAULT 1,
-        tenant_uuid VARCHAR(255)
+        tenant_uuid VARCHAR(255),
+        user_img DEFAULT NULL VARCHAR (255)
       )`;
 
     // Check if the table exists
