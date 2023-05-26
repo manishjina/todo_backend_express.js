@@ -17,10 +17,12 @@ const  handelGetAlluserSuggestion = (req, res) => {
   try {
    
     const token = req.headers.authorization;
+    
     jwt.verify(token, process.env.secret_key, (err, Tenantuuid) => {
       if (err) {
         return res.status(500).send({ error: err });
       } else {
+        //console.log(Tenantuuid,"uuid");
         const dbName = `tenant_${Tenantuuid.org_id}`;
         const userDbConfig = {
           ...dbConfig,

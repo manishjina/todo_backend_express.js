@@ -16,7 +16,7 @@ require("dotenv").config();
 usersRoute.patch("/assignto/:id", handleAssignToColleague);
 usersRoute.post("/login", userLogin);
 
-usersRoute.get('/suggestedname', handelGetAlluserSuggestion)
+usersRoute.get('/suggestion', handelGetAlluserSuggestion)
 //below are routes which needs admin verification;
 usersRoute.use("/", validateAdmin);
 usersRoute.post("/adduser", addUser);
