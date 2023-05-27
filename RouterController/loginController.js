@@ -10,6 +10,7 @@ const { setAccessTokenCookie } = require("../middleware/setAccesTokenCoockie");
 
 
 const loginUser = async (req, res) => {
+  console.log("login");
     try {
       const { email, password } = req.body;
   
