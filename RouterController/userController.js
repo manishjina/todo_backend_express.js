@@ -569,7 +569,7 @@ const handelUpdateUserInfo = async (req, res) => {
     const token = req.headers.authorization;
     const userEmail = req.headers.email;
     const role=req.headers.role
-    console.log(role);
+ 
 
 
 
