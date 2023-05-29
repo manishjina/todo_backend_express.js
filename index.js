@@ -39,7 +39,7 @@ app.use("/todo", userTodoRoute);
 app.use("/bothlogin", loginRouter);
 
 // Create server and socket.io instance
-const server = app.listen(8080, async (err) => {
+const server = app.listen(8090, async (err) => {
   if (err) {
     console.log(err);
   } else {
@@ -89,7 +89,8 @@ app.patch("/users/assignto/:id", async (req, res) => {
     }
 
     const tenantId = jwt.verify(token, process.env.secret_key);
-    const dbName = `tenant_${tenantId.org_id}`;
+    const dbName = `tenant_${tenantId.org_id||tenantId.uuid}`;
+
     const userDbConfig = {
       ...dbConfig,
       database: dbName,
@@ -125,10 +126,14 @@ app.patch("/users/assignto/:id", async (req, res) => {
     }
 
     // Checking if the ID is valid or not
-    const [specific_todo] = await util
+    var [specific_todo] = tenantId.org_id?  await util
       .promisify(connection.query)
       .call(connection, "SELECT * FROM todo WHERE user_id = ? AND id = ?", [
         user.id,
+        id,
+      ]): await util
+      .promisify(connection.query)
+      .call(connection, "SELECT * FROM todo WHERE id = ?", [
         id,
       ]);
 

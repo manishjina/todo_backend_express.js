@@ -493,7 +493,7 @@ const handleAssignToColleague = async (req, res) => {
     }
 
     const tenantId = jwt.verify(token, process.env.secret_key);
-    const dbName = `tenant_${tenantId.org_id}`;
+    const dbName = `tenant_${tenantId.org_id||tenantId.uuid}`;
     const userDbConfig = {
       ...dbConfig,
       database: dbName,
