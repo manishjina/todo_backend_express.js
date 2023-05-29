@@ -66,7 +66,13 @@ const handelAddTodo = (req, res) => {
     const token = req.headers.authorization;
     const user_email = req.headers.email;
 
+    function createDeadline() {
+      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const deadlineString = `${deadline.toISOString()}`;
+      return deadlineString;
+    }
     // Verify the access token
+
     jwt.verify(token, process.env.secret_key, (err, result) => {
       if (err) {
         return res.status(401).send({ error: "cannot process req", err });
@@ -96,11 +102,12 @@ const handelAddTodo = (req, res) => {
               const user_id = results[0].id;
               // Create a new todo in the tenant's database
               const createTodoQuery =
-                "INSERT INTO todo (title, description, status, user_id) VALUES (?, ?, ?, ?)";
+                "INSERT INTO todo (title, description, status,deadline_time, user_id) VALUES (?, ?, ?, ?, ?)";
               const createTodoValues = [
                 title,
                 description,
                 status || 0,
+                createDeadline(),
                 user_id,
               ];
               pool1.query(createTodoQuery, createTodoValues, (err, result) => {
@@ -538,8 +545,11 @@ const handelAddUserTodo = async (req, res) => {
     const { title, description, status, timelimit } = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
-    const nextday_limit = await getCurrentDateTime();
-
+    function createDeadline() {
+      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const deadlineString = `${deadline.toISOString()}`;
+      return deadlineString;
+    }
     // Verify the access token
     jwt.verify(token, process.env.secret_key, (err, result) => {
       if (err) {
@@ -577,7 +587,7 @@ const handelAddUserTodo = async (req, res) => {
                   description,
                   user_id,
                   status || 0,
-                  timelimit || nextday_limit.future,
+                  createDeadline()
                 ];
                 pool1.query(
                   createTodoQuery,
