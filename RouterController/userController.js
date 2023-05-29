@@ -53,8 +53,6 @@ const addUser = async (req, res) => {
     if (
       !email ||
       !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) ||
-      !password ||
-      password.length < 6 ||
       !firstname ||
       firstname.trim().length === 0 ||
       !lastname ||
