@@ -39,7 +39,7 @@ app.use("/todo", userTodoRoute);
 app.use("/bothlogin", loginRouter);
 
 // Create server and socket.io instance
-const server = app.listen(8090, async (err) => {
+const server = app.listen(8080, async (err) => {
   if (err) {
     console.log(err);
   } else {
