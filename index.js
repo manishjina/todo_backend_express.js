@@ -206,15 +206,15 @@ app.post("/clients/assigntodo", validateAdmin, async (req, res) => {
           } else {
             //now we have got the user with specific email add and the user id;
             //now we have to create a todo with the specific information and insert it to todo table;
-            const { title, description, status } = req.body;
+            const { title, description, status,deadline_time } = req.body;
             // console.log(response[0])
 
             const insert_q =
-              "INSERT INTO todo (title, description,status,assignby_admin,user_id) VALUES(?,?,?,?,?)";
+              "INSERT INTO todo (title, description,status,assignby_admin,deadline_time,user_id) VALUES(?,?,?,?,?,?)";
 
             connection.query(
               insert_q,
-              [title, description, status || 0, 1, response[0].id],
+              [title, description, status || 0, 1,deadline_time, response[0].id],
               (err, result) => {
                 if (err) {
                   connection.release();
