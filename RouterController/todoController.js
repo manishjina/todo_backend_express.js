@@ -542,7 +542,7 @@ const handleGetAllTodo = (req, res) => {
 //new
 const handelAddUserTodo = async (req, res) => {
   try {
-    const { title, description, status, timelimit } = req.body;
+    const { title, description, status} = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
     function createDeadline() {
@@ -550,6 +550,13 @@ const handelAddUserTodo = async (req, res) => {
       const deadlineString = `${deadline.toISOString()}`;
       return deadlineString;
     }
+
+    function getCurrentTime() {
+      const now = new Date();
+      const currentTime = `${now.toISOString()}`;
+      return currentTime;
+    }
+    
     // Verify the access token
     jwt.verify(token, process.env.secret_key, (err, result) => {
       if (err) {
@@ -579,7 +586,6 @@ const handelAddUserTodo = async (req, res) => {
                 const user_id = results[0].id;
                 // Create a new todo in the tenant's database
 
-                console.log(timelimit, "time limit");
                 const createTodoQuery =
                   "INSERT INTO todo (title, description, user_id, status, deadline_time) VALUES (?, ?, ?, ?, ?)";
                 const createTodoValues = [
@@ -604,8 +610,9 @@ const handelAddUserTodo = async (req, res) => {
                       title,
                       description,
                       user_id,
+                      time_at_created:getCurrentTime(),
                       status: status || 0,
-                      deadline_time: timelimit || nextday_limit.future,
+                      deadline_time:  createDeadline()
                     };
                     pool1.release();
                     res
