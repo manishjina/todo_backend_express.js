@@ -324,8 +324,8 @@ const handleDeleteSubtask = (req, res) => {
 };
 
 const handleUpdateSubtask = (req, res) => {
-  const { maintaskId,taskId } = req.params;
-  const { sub_task, status, color_code, custom_status, } = req.body;
+  const { maintaskId, taskId } = req.params;
+  const { sub_task, status, color_code, custom_status } = req.body;
   const token = req.headers.authorization;
 
   try {
@@ -349,7 +349,7 @@ const handleUpdateSubtask = (req, res) => {
         }
 
         const updateSubtaskQuery =
-        "UPDATE subTask SET sub_task = ?, color_code = ?, custom_status = ?, status = ? WHERE main_task_id = ? AND subtask_id = ?";
+          "UPDATE subTask SET sub_task = ?, color_code = ?, custom_status = ?, status = ? WHERE main_task_id = ? AND subtask_id = ?";
         connection.query(
           updateSubtaskQuery,
           [sub_task, color_code, custom_status, status, maintaskId, taskId],
@@ -367,7 +367,14 @@ const handleUpdateSubtask = (req, res) => {
               return res.status(404).json({ message: "Subtask not found" });
             }
 
-            res.status(200).json({ message: "Subtask updated successfully" });
+            const updatedObj = {
+              sub_task, status, color_code, custom_status 
+            };
+
+            res.status(200).json({
+              mes: "Subtask updated successfully",
+              updatedObj: updatedObj,
+            });
           }
         );
       });
@@ -376,6 +383,8 @@ const handleUpdateSubtask = (req, res) => {
     res.status(401).json({ error: "Something went wrong", err });
   }
 };
+
+
 
 module.exports = {
   handleUpdateSubtask,
