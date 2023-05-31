@@ -16,6 +16,7 @@ const { userTodoRoute } = require("./Routes/todoRoute");
 const { sendEmail } = require("./middleware/email&pass.sender");
 const { loginRouter } = require("./Routes/loginRoutes");
 const { validateAdmin } = require("./middleware/validateadmin");
+const { taskRouter } = require("./Routes/taskRoutes");
 
 app.use(express.json());
 app.use(cors());
@@ -32,6 +33,7 @@ app.get("/", (req, res) => {
 });
 
 app.use(cookieParser());
+app.use("/task",taskRouter)
 app.use("/client", clientRoute);
 app.use("/user", usersRoute);
 
