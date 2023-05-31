@@ -13,13 +13,13 @@ cron.schedule('0 9 * * *', () => {
     // Iterate over the fetched tasks and send email notifications
     results.forEach((task) => {
       // Extract task data
-      const { status, description, start_time, deadline, email, title } = task;
+      const { status, description, created_at, deadline_time, email, title } = task;
 
       // Calculate the percentage of time remaining
       const currentTime = new Date();
-      const startTime = new Date(start_time);
-      const remainingTime = deadline - currentTime;
-      const totalTime = deadline - startTime;
+      const startTime = new Date(created_at);
+      const remainingTime = deadline_time - currentTime;
+      const totalTime = deadline_time - startTime;
       const percentageRemaining = (remainingTime / totalTime) * 100;
 
       // Check if the time remaining is at least 80%
@@ -28,7 +28,7 @@ cron.schedule('0 9 * * *', () => {
         sendMail({
           status,
           description,
-          start_time,
+          created_at,
           deadline,
           email,
           title,
