@@ -84,6 +84,7 @@ const handelClientRegister = async (req, res) => {
             try {
               await createUserTableIfNotExists(pool1);
               await createTodoTableIfNotExists(pool1);
+              await createSubTaskTable(pool1)
             } catch (error) {
               console.error("Error creating tables:", error);
               return res
@@ -269,6 +270,32 @@ const handelClientAssignTodo = (req, res) => {
     return res.status(500).send({ error: "cannot process req", error });
   }
 };
+
+//creating a subtask Table in which all the subtask of main task will be stored;
+
+const createSubTaskTable = (pool1) => {
+  return new Promise((resolve, reject) => {
+    const query = `CREATE TABLE IF NOT EXISTS subtask (
+      subtask_id INT AUTO_INCREMENT PRIMARY KEY,
+      main_task_id INT NOT NULL,
+      sub_task VARCHAR(55) NOT NULL,
+      status TINYINT(1) NOT NULL DEFAULT 0,
+      color_code VARCHAR(10) DEFAULT NULL,
+      custom_status VARCHAR(55) DEFAULT NULL
+    )`;
+
+    pool1.query(query, (err, result) => {
+      if (err) {
+        console.log("Error while creating the table", err);
+        reject(err);
+      } else {
+        console.log("subTask Table created successfully!");
+        resolve();
+      }
+    });
+  });
+};
+
 
 // Check if table exists and create if not
 const createTodoTableIfNotExists = (pool1) => {

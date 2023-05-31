@@ -356,12 +356,10 @@ const handleUpdateTodo = (req, res) => {
               (error, updatedTodo) => {
                 connection.release();
                 if (error) {
-                  return res
-                    .status(500)
-                    .send({
-                      error: "Error while retrieving the updated todo",
-                      error,
-                    });
+                  return res.status(500).send({
+                    error: "Error while retrieving the updated todo",
+                    error,
+                  });
                 }
 
                 if (updatedTodo.length === 0) {
@@ -370,12 +368,10 @@ const handleUpdateTodo = (req, res) => {
                     .send({ message: "Updated todo not found" });
                 }
 
-                res
-                  .status(200)
-                  .send({
-                    message: "Todo updated successfully",
-                    todo: updatedTodo[0],
-                  });
+                res.status(200).send({
+                  message: "Todo updated successfully",
+                  todo: updatedTodo[0],
+                });
               }
             );
           });
@@ -452,12 +448,10 @@ const handleGetTodo = (req, res) => {
                     totalCountValues,
                     (countErr, countResult) => {
                       if (countErr) {
-                        return res
-                          .status(401)
-                          .send({
-                            error: "Cannot retrieve total count of todos",
-                            countErr,
-                          });
+                        return res.status(401).send({
+                          error: "Cannot retrieve total count of todos",
+                          countErr,
+                        });
                       }
                       const totalCount = countResult[0].totalCount;
                       const totalPages = Math.ceil(totalCount / limit);
@@ -517,12 +511,10 @@ const handleGetAllTodo = (req, res) => {
           "SELECT COUNT(*) AS totalCount FROM todo",
           (countErr, countResult) => {
             if (countErr) {
-              return res
-                .status(401)
-                .send({
-                  error: "Cannot retrieve total count of todos",
-                  countErr,
-                });
+              return res.status(401).send({
+                error: "Cannot retrieve total count of todos",
+                countErr,
+              });
             }
 
             const totalCount = countResult[0].totalCount;
@@ -542,7 +534,7 @@ const handleGetAllTodo = (req, res) => {
 //new
 const handelAddUserTodo = async (req, res) => {
   try {
-    const { title, description, status} = req.body;
+    const { title, description, status } = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
     function createDeadline() {
@@ -556,7 +548,7 @@ const handelAddUserTodo = async (req, res) => {
       const currentTime = `${now.toISOString()}`;
       return currentTime;
     }
-    
+
     // Verify the access token
     jwt.verify(token, process.env.secret_key, (err, result) => {
       if (err) {
@@ -593,7 +585,7 @@ const handelAddUserTodo = async (req, res) => {
                   description,
                   user_id,
                   status || 0,
-                  createDeadline()
+                  createDeadline(),
                 ];
                 pool1.query(
                   createTodoQuery,
@@ -610,9 +602,9 @@ const handelAddUserTodo = async (req, res) => {
                       title,
                       description,
                       user_id,
-                      time_at_created:getCurrentTime(),
+                      time_at_created: getCurrentTime(),
                       status: status || 0,
-                      deadline_time:  createDeadline()
+                      deadline_time: createDeadline(),
                     };
                     pool1.release();
                     res
@@ -702,20 +694,16 @@ const handleDeleteUserTodo = (req, res) => {
                 const deletedTodoQuery = "SELECT * FROM todo WHERE id = ?";
                 connection.query(deletedTodoQuery, [todoId], (error, todo) => {
                   if (error) {
-                    return res
-                      .status(500)
-                      .send({
-                        error: "Error while retrieving the deleted todo",
-                        error,
-                      });
+                    return res.status(500).send({
+                      error: "Error while retrieving the deleted todo",
+                      error,
+                    });
                   }
 
-                  res
-                    .status(200)
-                    .send({
-                      message: "Todo deleted successfully",
-                      id: Number(todoId),
-                    });
+                  res.status(200).send({
+                    message: "Todo deleted successfully",
+                    id: Number(todoId),
+                  });
                 });
               }
             );
@@ -729,80 +717,6 @@ const handleDeleteUserTodo = (req, res) => {
   }
 };
 
-// updateing the user Todo
-// const handleUpdateUserTodo = (req, res) => {
-//   try {
-//     const todoId = req.params.id;
-//     const { title, description, status } = req.body;
-//     const token = req.headers.authorization;
-//     const user_email = req.headers.email;
-
-//     // Verify the access token
-//     jwt.verify(token, process.env.secret_key, (err, result) => {
-//       if (err) {
-//         return res.status(401).send({ error: "cannot process req", err });
-//       }
-
-//       const dbName = `tenant_${result.org_id}`;
-//       const userDbConfig = {
-//         ...dbConfig,
-//         database: dbName,
-//       };
-//       const pool1 = mysql.createPool(userDbConfig);
-
-//       pool1.getConnection((error, connection) => {
-//         if (error) {
-//           return res
-//             .status(401)
-//             .send({ error: "error while connecting to db", error });
-//         }
-
-//         // Check if the user exists
-//         const query = "SELECT * FROM user WHERE email = ?";
-//         connection.query(query, [user_email], (error, results) => {
-//           if (error) {
-//             connection.release();
-//             return res.status(401).send({ error: "cannot process req", error });
-//           }
-
-//           if (results.length === 0) {
-//             connection.release();
-//             return res.send({ message: "User not found" });
-//           }
-
-//           const user_id = results[0].id;
-
-//           // Update the todo in the tenant's database
-//           const updateTodoQuery =
-//             "UPDATE todo SET title = ?, description = ?, status = ? WHERE id = ? AND user_id= ? ";
-//           const updateTodoValues = [
-//             title,
-//             description,
-//             status,
-//             todoId,
-//             user_id,
-//           ];
-
-//           connection.query(updateTodoQuery, updateTodoValues, (err, result) => {
-//             connection.release();
-//             if (err) {
-//               return res.status(401).send({ error: "cannot process req", err });
-//             }
-
-//             if (result.affectedRows === 0) {
-//               return res.status(404).send({ message: "Todo not found" });
-//             }
-
-//             res.status(200).send({ message: "Todo updated successfully" });
-//           });
-//         });
-//       });
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res.send("error");
-//   }
-// };
 //new
 const handleUpdateUserTodo = (req, res) => {
   try {
@@ -876,12 +790,10 @@ const handleUpdateUserTodo = (req, res) => {
               (error, updatedTodo) => {
                 connection.release();
                 if (error) {
-                  return res
-                    .status(500)
-                    .send({
-                      error: "Error while retrieving the updated todo",
-                      error,
-                    });
+                  return res.status(500).send({
+                    error: "Error while retrieving the updated todo",
+                    error,
+                  });
                 }
 
                 if (updatedTodo.length === 0) {
@@ -890,12 +802,10 @@ const handleUpdateUserTodo = (req, res) => {
                     .send({ message: "Updated todo not found" });
                 }
 
-                res
-                  .status(200)
-                  .send({
-                    message: "Todo updated successfully",
-                    todo: updatedTodo[0],
-                  });
+                res.status(200).send({
+                  message: "Todo updated successfully",
+                  todo: updatedTodo[0],
+                });
               }
             );
           });
@@ -907,6 +817,9 @@ const handleUpdateUserTodo = (req, res) => {
     res.send("error");
   }
 };
+
+
+
 
 async function getCurrentDateTime() {
   const currentDateTime = new Date(); // Get the current date and time
@@ -942,4 +855,5 @@ module.exports = {
   handelAddUserTodo,
   handleUpdateUserTodo,
   handleDeleteUserTodo,
+
 };
