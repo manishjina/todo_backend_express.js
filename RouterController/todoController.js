@@ -818,61 +818,6 @@ const handleUpdateUserTodo = (req, res) => {
   }
 };
 
-//funtion to add a subtask by user;
-
-//new
-const handelAddSubTask = async (req, res) => {
-  try {
-    const main_task_id = req.params.id;
-    const { sub_task_title, status } = req.body;
-    const token = req.headers.authorization;
-
-    const result = await new Promise((resolve, reject) => {
-      jwt.verify(token, process.env.secret_key, (err, decoded) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(decoded);
-        }
-      });
-    });
-  
-    const dbName = `tenant_${result.org_id || result.uuid}`;
-    const userDbConfig = {
-      ...dbConfig,
-      database: dbName,
-    };
-    const pool1 = mysql.createPool(userDbConfig);
-
-    const checkQ = "SELECT id FROM todo WHERE id=?";
-    pool1.query(checkQ, [main_task_id], (err, result) => {
-      if (err) {
-        return res.status(301).send({ "err": err });
-      } else if (result.length === 0) {
-        res.send({ "no_main_id": "no main task found" });
-      } else {
-        const subtaskQ =
-          "INSERT INTO subTask (main_task_id, sub_task, status, color_code, custom_status) VALUES (?, ?, ?, ?, ?)";
-  
-        const values = [main_task_id, sub_task_title, status || 0, '', ''];
-  
-        pool1.query(subtaskQ, values, (err, result) => {
-          if (err) {
-            return res.status(301).send({ "err": "cannot post subtask" });
-          } else {
-            console.log('subtask inserted successfully');
-            res.send({ "success": "sub task added successfully" });
-          }
-        });
-      }
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(401)
-      .send({ error: `error while adding the task ${error}` });
-  }
-};
 
 
 
@@ -910,5 +855,5 @@ module.exports = {
   handelAddUserTodo,
   handleUpdateUserTodo,
   handleDeleteUserTodo,
-  handelAddSubTask,
+
 };

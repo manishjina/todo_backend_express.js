@@ -26,9 +26,9 @@ userTodoRoute.patch('/userupdatetodo/:id',handleUpdateUserTodo)
 
 userTodoRoute.delete('/userdeletetodo/:id',handleDeleteUserTodo)
 
-//adding subtask to the main Task/Todo;
 
-userTodoRoute.post('/addsubtask/:id',handelAddSubTask)
+
+
 
 
 module.exports={userTodoRoute}
