@@ -275,7 +275,7 @@ const handelClientAssignTodo = (req, res) => {
 
 const createSubTaskTable = (pool1) => {
   return new Promise((resolve, reject) => {
-    const query = `CREATE TABLE IF NOT EXISTS subTask (
+    const query = `CREATE TABLE IF NOT EXISTS subtask (
       subtask_id INT AUTO_INCREMENT PRIMARY KEY,
       main_task_id INT NOT NULL,
       sub_task VARCHAR(55) NOT NULL,
