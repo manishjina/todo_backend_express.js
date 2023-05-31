@@ -4,10 +4,7 @@ const { dbConfig, pool } = require("../db/db");
 const mysql = require("mysql");
 const { encryptPassword } = require("../middleware/password.encrypt");
 const { decryptPassword } = require("../middleware/password.decrypt");
-const {
-  
-  sendEmail,
-} = require("../middleware/email&pass.sender");
+const { sendEmail } = require("../middleware/email&pass.sender");
 const util = require("util");
 const {
   generateRandomPassword,
@@ -18,19 +15,19 @@ const {
 const handelGetAlluserSuggestion = (req, res) => {
   try {
     const token = req.headers.authorization;
- console.log(token);
-    
+    console.log(token);
+
     jwt.verify(token, process.env.secret_key, (err, Tenantuuid) => {
       if (err) {
         return res.status(500).send({ error: err });
       } else {
-        console.log(Tenantuuid,"log");
-        const dbName = `tenant_${Tenantuuid.org_id||Tenantuuid.uuid}`;
+        console.log(Tenantuuid, "log");
+        const dbName = `tenant_${Tenantuuid.org_id || Tenantuuid.uuid}`;
         const userDbConfig = {
           ...dbConfig,
           database: dbName,
         };
-     
+
         const pool1 = mysql.createPool(userDbConfig);
         const q = "SELECT firstname, lastname, email FROM user WHERE role = 0";
         pool1.query(q, (err, result) => {
@@ -43,11 +40,10 @@ const handelGetAlluserSuggestion = (req, res) => {
       }
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).send({ error });
   }
 };
-
 
 //new
 const addUser = async (req, res) => {
@@ -57,8 +53,6 @@ const addUser = async (req, res) => {
     if (
       !email ||
       !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) ||
-      !password ||
-      password.length < 6 ||
       !firstname ||
       firstname.trim().length === 0 ||
       !lastname ||
@@ -174,13 +168,12 @@ const getUser = (req, res) => {
   try {
     const token = req.headers.authorization;
     const email = req.headers.email;
-    
 
     jwt.verify(token, process.env.secret_key, (err, result) => {
       if (err)
         return res.status(401).send({ error: "cannot process req", err });
-console.log(result,"result");
-      const dbName = `tenant_${result.org_id||result.uuid}`;
+      console.log(result, "result");
+      const dbName = `tenant_${result.org_id || result.uuid}`;
       const userDbConfig = {
         ...dbConfig,
         database: dbName,
@@ -213,7 +206,6 @@ console.log(result,"result");
     res.send("error");
   }
 };
-
 
 //new function for updateing code from admin
 
@@ -501,7 +493,7 @@ const handleAssignToColleague = async (req, res) => {
     }
 
     const tenantId = jwt.verify(token, process.env.secret_key);
-    const dbName = `tenant_${tenantId.org_id}`;
+    const dbName = `tenant_${tenantId.org_id||tenantId.uuid}`;
     const userDbConfig = {
       ...dbConfig,
       database: dbName,
@@ -570,42 +562,87 @@ const handleAssignToColleague = async (req, res) => {
   }
 };
 
-const handelUpdateUserInfo=(req,res)=>{
+const handelUpdateUserInfo = async (req, res) => {
   try {
+    const token = req.headers.authorization;
+    const userEmail = req.headers.email;
+    const role=req.headers.role
+ 
+
+
+
+   
+    let { firstname, lastname, password } = req.body;
+ 
+
+
+    if (!firstname || !lastname || !password)
+      return res.status(400).send({ error: "All fields are mandatory" });
+      console.log(password,"prev password");
+      let updatedPass;
+      if (password.length < 20) {
+       updatedPass= await encryptPassword
+        (password);
+        console.log(updatedPass,"updated password");
+      }
+
+      
+
+      const tableName = role === "user" ? "user_incomming" : "registration";
+const q = `UPDATE ${tableName} SET firstname = ?, lastname = ?, password = ? WHERE email = ?`;
+      const pool = mysql.createPool(dbConfig);
+
+      pool.query(q,[firstname,lastname,updatedPass|| password,userEmail],(err,result)=>{
+        if(err){
+          return res.status(401).send({"error":err})
+        }
+        console.log("user info updated in user incomming table")
+
+        jwt.verify(token, process.env.secret_key, async (err, decoded) => {
+          if (err) return res.status(401).send({ error: "Invalid token" });
     
-    const {firstname,lastname,email,user_img}=req.body
-    const token=req.headers.authorization;
-    const userEmail=req.headers.email;
+          const { uuid, org_id } = decoded;
+          const tenantDbConfig = {
+            ...dbConfig,
+            database: `tenant_${uuid || org_id}`,
+          };
+     
+    
+          // Hash the password
+         
+    
+          const tenantPool = mysql.createPool(tenantDbConfig);
+    
+          tenantPool.getConnection((err, connection) => {
+            if (err)
+              return res
+                .status(500)
+                .send({ error: "Error connecting to the database" });
+    
+            const updateCommonQuery =
+              "UPDATE user SET firstname = ?, lastname = ?, password = ? WHERE email = ?";
+            const values = [firstname, lastname, updatedPass||password, userEmail];
+    
+            connection.query(updateCommonQuery, values, (err, result) => {
+              connection.release(); // Release the database connection
+    
+              if (err) {
+                return res.status(500).send({ error: "Error updating user info" });
+              }
+    
+              console.log('updated succ in user table')
+              res.status(200).send({ success: "User info updated successfully" });
+            });
+          });
+        });
+      })
 
-    jwt.verify(token,process.env.secret_key,async(err,result)=>{
-      if(err)return res.status(300).send({"invlaid token":err})
-      //connection with db;
-      console.log(result,"result");
-      const tenantDbConfig = {
-        ...dbConfig,
-        database: `tenant_${result.uuid}`,
-      };
-      //hashing the password;
-      let hashpassword = await encryptPassword(password);
-      const tenantPool = mysql.createPool(tenantDbConfig);
-
-       tenantPool.getConnection((err,connection)=>{
-        if(err)return res.status(300).send({"error while connecting to db":err})
-        const updateCommonQuery =
-        "UPDATE user_incomming SET firstname = ?, lastname = ?, password = ?, user_img=?  WHERE email = ?";
-        const values=[firstname,lastname,password,user_img,userEmail]
-        connection.query(updateCommonQuery,[values],(err,res)=>{
-          if(err)return res.status(300).send({"error while updateing":err})
-          else res.status(200).send('user info updated success')
-        })
-       })
-
-    })
-
+   
   } catch (error) {
-    return res.status(500).send(error)
+    console.log(error, "errorr");
+    return res.status(500).send({ error: "Internal server error" });
   }
-}
+};
 
 module.exports = {
   addUser,
@@ -616,5 +653,5 @@ module.exports = {
   handleGetAllUser,
   handleAssignToColleague,
   handelGetAlluserSuggestion,
-  handelUpdateUserInfo
+  handelUpdateUserInfo,
 };

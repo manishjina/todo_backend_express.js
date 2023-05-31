@@ -39,6 +39,7 @@ const loginUser = async (req, res) => {
       if (userResults.length > 0) {
         const user = userResults[0];
         const passwordMatch = await decryptPassword(password, user.password);
+        console.log(passwordMatch)
         if (passwordMatch) {
           const token = generateToken({ org_id: user.org_id });
           setAccessTokenCookie(res, token);

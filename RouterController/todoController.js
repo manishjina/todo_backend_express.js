@@ -62,11 +62,17 @@ const mysql = require("mysql");
 //new
 const handelAddTodo = (req, res) => {
   try {
-    const { title, description, status } = req.body;
+    const { title, description, status,color_code,custom_status } = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
 
+    function createDeadline() {
+      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const deadlineString = `${deadline.toISOString()}`;
+      return deadlineString;
+    }
     // Verify the access token
+
     jwt.verify(token, process.env.secret_key, (err, result) => {
       if (err) {
         return res.status(401).send({ error: "cannot process req", err });
@@ -80,7 +86,9 @@ const handelAddTodo = (req, res) => {
       const pool1 = mysql.createPool(userDbConfig);
       pool1.getConnection((error, pool1) => {
         if (error) {
-          return res.status(401).send({ error: "error while connecting to db", error });
+          return res
+            .status(401)
+            .send({ error: "error while connecting to db", error });
         } else {
           //if connection done
           const query = "SELECT * FROM user WHERE email = ?";
@@ -93,12 +101,23 @@ const handelAddTodo = (req, res) => {
             } else {
               const user_id = results[0].id;
               // Create a new todo in the tenant's database
-              const createTodoQuery = "INSERT INTO todo (title, description, status, user_id) VALUES (?, ?, ?, ?)";
-              const createTodoValues = [title, description, status || 0, user_id];
+              const createTodoQuery =
+                "INSERT INTO todo (title, description, status,deadline_time, user_id,color_code,custom_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+              const createTodoValues = [
+                title,
+                description,
+                status || 0,
+                createDeadline(),
+                user_id,
+                color_code||null,
+                custom_status||null
+              ];
               pool1.query(createTodoQuery, createTodoValues, (err, result) => {
                 if (err) {
                   pool1.release();
-                  return res.status(401).send({ error: "cannot process req", err });
+                  return res
+                    .status(401)
+                    .send({ error: "cannot process req", err });
                 }
 
                 const todoId = result.insertId;
@@ -108,11 +127,13 @@ const handelAddTodo = (req, res) => {
                 pool1.query(fetchTodoQuery, [todoId], (err, todo) => {
                   if (err) {
                     pool1.release();
-                    return res.status(401).send({ error: "cannot process req", err });
+                    return res
+                      .status(401)
+                      .send({ error: "cannot process req", err });
                   }
 
                   pool1.release();
-                  res.status(200).send({message:"success", todo: todo[0] });
+                  res.status(200).send({ message: "success", todo: todo[0] });
                 });
               });
             }
@@ -125,7 +146,6 @@ const handelAddTodo = (req, res) => {
     res.send("error");
   }
 };
-
 
 // To delete todo only admin access
 const handleDeleteTodo = (req, res) => {
@@ -332,18 +352,30 @@ const handleUpdateTodo = (req, res) => {
 
             // Get the updated todo details
             const getUpdatedTodoQuery = "SELECT * FROM todo WHERE id = ?";
-            connection.query(getUpdatedTodoQuery, [todoId], (error, updatedTodo) => {
-              connection.release();
-              if (error) {
-                return res.status(500).send({ error: "Error while retrieving the updated todo", error });
-              }
+            connection.query(
+              getUpdatedTodoQuery,
+              [todoId],
+              (error, updatedTodo) => {
+                connection.release();
+                if (error) {
+                  return res.status(500).send({
+                    error: "Error while retrieving the updated todo",
+                    error,
+                  });
+                }
 
-              if (updatedTodo.length === 0) {
-                return res.status(404).send({ message: "Updated todo not found" });
-              }
+                if (updatedTodo.length === 0) {
+                  return res
+                    .status(404)
+                    .send({ message: "Updated todo not found" });
+                }
 
-              res.status(200).send({ message: "Todo updated successfully", todo: updatedTodo[0] });
-            });
+                res.status(200).send({
+                  message: "Todo updated successfully",
+                  todo: updatedTodo[0],
+                });
+              }
+            );
           });
         });
       });
@@ -353,7 +385,6 @@ const handleUpdateTodo = (req, res) => {
     res.send("error");
   }
 };
-
 
 // To get all todo from a perticular user
 const handleGetTodo = (req, res) => {
@@ -409,20 +440,30 @@ const handleGetTodo = (req, res) => {
                     .send({ error: "cannot process req", err });
                 }
                 if (result.length === 0) {
-                  return res.send([]);
+                  return res.send({ results: [] });
                 } else {
-                  const totalCountQuery = "SELECT COUNT(*) AS totalCount FROM todo WHERE user_id = ?";
+                  const totalCountQuery =
+                    "SELECT COUNT(*) AS totalCount FROM todo WHERE user_id = ?";
                   const totalCountValues = [user_id];
-                  pool1.query(totalCountQuery, totalCountValues, (countErr, countResult) => {
-                    if (countErr) {
-                      return res.status(401).send({ error: "Cannot retrieve total count of todos", countErr });
-                    }
-                    const totalCount = countResult[0].totalCount;
-                    const totalPages = Math.ceil(totalCount / limit);
+                  pool1.query(
+                    totalCountQuery,
+                    totalCountValues,
+                    (countErr, countResult) => {
+                      if (countErr) {
+                        return res.status(401).send({
+                          error: "Cannot retrieve total count of todos",
+                          countErr,
+                        });
+                      }
+                      const totalCount = countResult[0].totalCount;
+                      const totalPages = Math.ceil(totalCount / limit);
 
-                    pool1.release();
-                    res.status(200).send({ results: result, totalCount, totalPages });
-                  });
+                      pool1.release();
+                      res
+                        .status(200)
+                        .send({ results: result, totalCount, totalPages });
+                    }
+                  );
                 }
               });
             }
@@ -435,7 +476,6 @@ const handleGetTodo = (req, res) => {
     res.send("error");
   }
 };
-
 
 // to get all todo only admin access
 const handleGetAllTodo = (req, res) => {
@@ -454,7 +494,9 @@ const handleGetAllTodo = (req, res) => {
 
     pool1.getConnection((error, connection) => {
       if (error) {
-        return res.status(401).send({ error: "Error while connecting to the database", error });
+        return res
+          .status(401)
+          .send({ error: "Error while connecting to the database", error });
       }
 
       const query = "SELECT * FROM todo LIMIT ? OFFSET ?";
@@ -467,16 +509,22 @@ const handleGetAllTodo = (req, res) => {
         }
 
         // Retrieve the total count of todos
-        connection.query("SELECT COUNT(*) AS totalCount FROM todo", (countErr, countResult) => {
-          if (countErr) {
-            return res.status(401).send({ error: "Cannot retrieve total count of todos", countErr });
+        connection.query(
+          "SELECT COUNT(*) AS totalCount FROM todo",
+          (countErr, countResult) => {
+            if (countErr) {
+              return res.status(401).send({
+                error: "Cannot retrieve total count of todos",
+                countErr,
+              });
+            }
+
+            const totalCount = countResult[0].totalCount;
+            const totalPages = Math.ceil(totalCount / limit);
+
+            res.send({ results, totalCount, totalPages });
           }
-
-          const totalCount = countResult[0].totalCount;
-          const totalPages = Math.ceil(totalCount / limit);
-
-          res.send({ results, totalCount, totalPages });
-        });
+        );
       });
     });
   } catch (error) {
@@ -485,14 +533,23 @@ const handleGetAllTodo = (req, res) => {
   }
 };
 
-
 //new
 const handelAddUserTodo = async (req, res) => {
   try {
-    const { title, description, status, timelimit } = req.body;
+    const { title, description, status } = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
-    const nextday_limit = await getCurrentDateTime();
+    function createDeadline() {
+      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const deadlineString = `${deadline.toISOString()}`;
+      return deadlineString;
+    }
+
+    function getCurrentTime() {
+      const now = new Date();
+      const currentTime = `${now.toISOString()}`;
+      return currentTime;
+    }
 
     // Verify the access token
     jwt.verify(token, process.env.secret_key, (err, result) => {
@@ -523,7 +580,6 @@ const handelAddUserTodo = async (req, res) => {
                 const user_id = results[0].id;
                 // Create a new todo in the tenant's database
 
-                console.log(timelimit, "time limit");
                 const createTodoQuery =
                   "INSERT INTO todo (title, description, user_id, status, deadline_time) VALUES (?, ?, ?, ?, ?)";
                 const createTodoValues = [
@@ -531,7 +587,7 @@ const handelAddUserTodo = async (req, res) => {
                   description,
                   user_id,
                   status || 0,
-                  timelimit || nextday_limit.future,
+                  createDeadline(),
                 ];
                 pool1.query(
                   createTodoQuery,
@@ -548,8 +604,9 @@ const handelAddUserTodo = async (req, res) => {
                       title,
                       description,
                       user_id,
+                      time_at_created: getCurrentTime(),
                       status: status || 0,
-                      deadline_time: timelimit || nextday_limit.future,
+                      deadline_time: createDeadline(),
                     };
                     pool1.release();
                     res
@@ -568,8 +625,6 @@ const handelAddUserTodo = async (req, res) => {
     res.send("error");
   }
 };
-
-
 
 //new
 const handleDeleteUserTodo = (req, res) => {
@@ -641,10 +696,16 @@ const handleDeleteUserTodo = (req, res) => {
                 const deletedTodoQuery = "SELECT * FROM todo WHERE id = ?";
                 connection.query(deletedTodoQuery, [todoId], (error, todo) => {
                   if (error) {
-                    return res.status(500).send({ error: "Error while retrieving the deleted todo", error });
+                    return res.status(500).send({
+                      error: "Error while retrieving the deleted todo",
+                      error,
+                    });
                   }
 
-                  res.status(200).send({ message: "Todo deleted successfully",  id:Number(todoId) });
+                  res.status(200).send({
+                    message: "Todo deleted successfully",
+                    id: Number(todoId),
+                  });
                 });
               }
             );
@@ -658,81 +719,6 @@ const handleDeleteUserTodo = (req, res) => {
   }
 };
 
-
-// updateing the user Todo
-// const handleUpdateUserTodo = (req, res) => {
-//   try {
-//     const todoId = req.params.id;
-//     const { title, description, status } = req.body;
-//     const token = req.headers.authorization;
-//     const user_email = req.headers.email;
-
-//     // Verify the access token
-//     jwt.verify(token, process.env.secret_key, (err, result) => {
-//       if (err) {
-//         return res.status(401).send({ error: "cannot process req", err });
-//       }
-
-//       const dbName = `tenant_${result.org_id}`;
-//       const userDbConfig = {
-//         ...dbConfig,
-//         database: dbName,
-//       };
-//       const pool1 = mysql.createPool(userDbConfig);
-
-//       pool1.getConnection((error, connection) => {
-//         if (error) {
-//           return res
-//             .status(401)
-//             .send({ error: "error while connecting to db", error });
-//         }
-
-//         // Check if the user exists
-//         const query = "SELECT * FROM user WHERE email = ?";
-//         connection.query(query, [user_email], (error, results) => {
-//           if (error) {
-//             connection.release();
-//             return res.status(401).send({ error: "cannot process req", error });
-//           }
-
-//           if (results.length === 0) {
-//             connection.release();
-//             return res.send({ message: "User not found" });
-//           }
-
-//           const user_id = results[0].id;
-
-//           // Update the todo in the tenant's database
-//           const updateTodoQuery =
-//             "UPDATE todo SET title = ?, description = ?, status = ? WHERE id = ? AND user_id= ? ";
-//           const updateTodoValues = [
-//             title,
-//             description,
-//             status,
-//             todoId,
-//             user_id,
-//           ];
-
-//           connection.query(updateTodoQuery, updateTodoValues, (err, result) => {
-//             connection.release();
-//             if (err) {
-//               return res.status(401).send({ error: "cannot process req", err });
-//             }
-
-//             if (result.affectedRows === 0) {
-//               return res.status(404).send({ message: "Todo not found" });
-//             }
-
-//             res.status(200).send({ message: "Todo updated successfully" });
-//           });
-//         });
-//       });
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res.send("error");
-//   }
-// };
 //new
 const handleUpdateUserTodo = (req, res) => {
   try {
@@ -800,18 +786,30 @@ const handleUpdateUserTodo = (req, res) => {
 
             // Get the updated todo details
             const getUpdatedTodoQuery = "SELECT * FROM todo WHERE id = ?";
-            connection.query(getUpdatedTodoQuery, [todoId], (error, updatedTodo) => {
-              connection.release();
-              if (error) {
-                return res.status(500).send({ error: "Error while retrieving the updated todo", error });
-              }
+            connection.query(
+              getUpdatedTodoQuery,
+              [todoId],
+              (error, updatedTodo) => {
+                connection.release();
+                if (error) {
+                  return res.status(500).send({
+                    error: "Error while retrieving the updated todo",
+                    error,
+                  });
+                }
 
-              if (updatedTodo.length === 0) {
-                return res.status(404).send({ message: "Updated todo not found" });
-              }
+                if (updatedTodo.length === 0) {
+                  return res
+                    .status(404)
+                    .send({ message: "Updated todo not found" });
+                }
 
-              res.status(200).send({ message: "Todo updated successfully", todo: updatedTodo[0] });
-            });
+                res.status(200).send({
+                  message: "Todo updated successfully",
+                  todo: updatedTodo[0],
+                });
+              }
+            );
           });
         });
       });
@@ -821,6 +819,7 @@ const handleUpdateUserTodo = (req, res) => {
     res.send("error");
   }
 };
+
 
 
 
@@ -840,8 +839,8 @@ async function getCurrentDateTime() {
     minute: "2-digit",
   };
 
-  const currentFormatted = currentDateTime.toLocaleString( options);
-  const futureFormatted = futureDateTime.toLocaleString( options);
+  const currentFormatted = currentDateTime.toLocaleString(options);
+  const futureFormatted = futureDateTime.toLocaleString(options);
 
   return {
     current: currentFormatted,
@@ -858,4 +857,5 @@ module.exports = {
   handelAddUserTodo,
   handleUpdateUserTodo,
   handleDeleteUserTodo,
+
 };

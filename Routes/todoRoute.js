@@ -1,5 +1,5 @@
 const express = require('express');
-const { handelAddTodo, handleDeleteTodo, handleUpdateTodo, handleGetAllTodo, handleGetTodo, handelAddUserTodo, handleDeleteUserTodo, handleUpdateUserTodo } = require('../RouterController/todoController');
+const { handelAddTodo, handleDeleteTodo, handleUpdateTodo, handleGetAllTodo, handleGetTodo, handelAddUserTodo, handleDeleteUserTodo, handleUpdateUserTodo, handelAddSubTask } = require('../RouterController/todoController');
 const { validateAdmin } = require('../middleware/validateadmin');
 
 
@@ -25,4 +25,10 @@ userTodoRoute.post('/useraddtodo',handelAddUserTodo)
 userTodoRoute.patch('/userupdatetodo/:id',handleUpdateUserTodo)
 
 userTodoRoute.delete('/userdeletetodo/:id',handleDeleteUserTodo)
+
+
+
+
+
+
 module.exports={userTodoRoute}
