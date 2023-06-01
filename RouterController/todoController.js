@@ -62,7 +62,7 @@ const mysql = require("mysql");
 //new
 const handelAddTodo = (req, res) => {
   try {
-    const { title, description, status } = req.body;
+    const { title, description, status,color_code,custom_status } = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
 
@@ -102,13 +102,15 @@ const handelAddTodo = (req, res) => {
               const user_id = results[0].id;
               // Create a new todo in the tenant's database
               const createTodoQuery =
-                "INSERT INTO todo (title, description, status,deadline_time, user_id) VALUES (?, ?, ?, ?, ?)";
+                "INSERT INTO todo (title, description, status,deadline_time, user_id,color_code,custom_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
               const createTodoValues = [
                 title,
                 description,
                 status || 0,
                 createDeadline(),
                 user_id,
+                color_code||null,
+                custom_status||null
               ];
               pool1.query(createTodoQuery, createTodoValues, (err, result) => {
                 if (err) {
