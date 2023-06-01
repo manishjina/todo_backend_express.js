@@ -3,11 +3,10 @@ const { handleGetTasks, handleDeleteSubtask, handleUpdateSubtask, handleDeleteTa
 const taskRouter=express.Router();
 
 
-taskRouter.get("/alltask/:userId",handleGetTasks)
+taskRouter.get("/alltask",handleGetTasks)
 taskRouter.post('/addsubtask/:id',handelAddSubTask)
-taskRouter.delete("/deletesubtask/:taskId/:maintaskId",handleDeleteSubtask)
-taskRouter.patch("/updatesubtask/:taskId/:maintaskId",handleUpdateSubtask)
+taskRouter.delete("/deletesubtask/:maintaskId/:taskId",handleDeleteSubtask)
+taskRouter.patch("/updatesubtask/:maintaskId/:taskId",handleUpdateSubtask)
 taskRouter.delete("/deletetask/:userId/:taskId",handleDeleteTask)
-taskRouter.patch("/updatetask/:userId/:taskId",handleUpdateTask)
 
 module.exports={taskRouter}
