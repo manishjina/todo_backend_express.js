@@ -41,7 +41,7 @@ app.use("/todo", userTodoRoute);
 app.use("/bothlogin", loginRouter);
 
 // Create server and socket.io instance
-const server = app.listen(3001, async (err) => {
+const server = app.listen(process.env.PORT||8090, async (err) => {
   if (err) {
     console.log("inside server fuinction")
     console.log(err);
