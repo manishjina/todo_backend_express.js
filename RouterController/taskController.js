@@ -274,13 +274,13 @@ const handleDeleteTask = (req, res) => {
                 return res.status(404).json({ message: "Task not found" });
               }
   
-              res.status(200).json({ message: "Task updated successfully" });
+              return res.status(200).json({ message: "Task updated successfully" });
             }
           );
         });
       });
     } catch (err) {
-      res.status(401).json({ error: "Something went wrong", err });
+      return res.status(401).json({ error: "Something went wrong", err });
     }
   };
   
@@ -380,15 +380,7 @@ const handleUpdateSubtask = (req, res) => {
               return res.status(404).json({ message: "Subtask not found" });
             }
 
-            res.status(200).json({ message: "Subtask updated successfully",data:{...req.body,subtask_id:result} });
-            const updatedObj = {
-              sub_task, status, color_code, custom_status 
-            };
-
-            res.status(200).json({
-              mes: "Subtask updated successfully",
-              updatedObj: updatedObj,
-            })
+            return res.status(200).json({ message: "Subtask updated successfully",data:{...req.body,subtask_id:result} });
           }
         );
       });
