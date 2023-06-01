@@ -7,7 +7,7 @@ const mysql = require("mysql");
 const handelAddSubTask = async (req, res) => {
   try {
     const main_task_id = req.params.id;
-    const { sub_task_title, status } = req.body;
+    const { sub_task, status,custom_status="",color_code="" } = req.body;
     const token = req.headers.authorization;
 
     const result = await new Promise((resolve, reject) => {
@@ -35,16 +35,16 @@ const handelAddSubTask = async (req, res) => {
         res.send({ "no_main_id": "no main task found" });
       } else {
         const subtaskQ =
-          "INSERT INTO subTask (main_task_id, sub_task, status, color_code, custom_status) VALUES (?, ?, ?, ?, ?)";
+          "INSERT INTO subtask (main_task_id, sub_task, status, color_code, custom_status) VALUES (?, ?, ?, ?, ?)";
   
-        const values = [main_task_id, sub_task_title, status || 0, '', ''];
+        const values = [main_task_id, sub_task, status || 0,color_code, custom_status];
   
         pool1.query(subtaskQ, values, (err, result) => {
           if (err) {
-            return res.status(301).send({ "err": "cannot post subtask" });
+            return res.status(301).send({ "err": "cannot post subtask" .err});
           } else {
             console.log('subtask inserted successfully');
-            res.send({ "success": "sub task added successfully" });
+            res.send({ "message": "sub task added successfully",data:{...req.body,subtask_id:result.insertId} });
           }
         });
       }
@@ -61,85 +61,99 @@ const handelAddSubTask = async (req, res) => {
 
 // Get all tasks with their associated subtasks
 const handleGetTasks = (req, res) => {
-  const { userId } = req.params;    
-  const token = req.headers.authorization;
-  try {
-    jwt.verify(token, process.env.secret_key, (err, result) => {
-      if (err) {
-        return res.status(401).send({ error: "cannot process req", err });
-      }
-
-      const dbName = `tenant_${result.org_id || result.uuid}`;
-      const userDbConfig = {
-        ...dbConfig,
-        database: dbName,
-      };
-      const pool1 = mysql.createPool(userDbConfig);
-
-      pool1.getConnection((error, connection) => {
-        if (error) {
-          return res
-            .status(401)
-            .send({ error: "error while connecting to db", error });
+    const token = req.headers.authorization;
+    const email = req.headers.email;
+    try {
+      jwt.verify(token, process.env.secret_key, (err, result) => {
+        if (err) {
+          return res.status(401).send({ error: "Cannot process the request", err });
         }
-        const query = `
+  
+        const dbName = `tenant_${result.org_id || result.uuid}`;
+        const userDbConfig = {
+          ...dbConfig,
+          database: dbName,
+        };
+        const pool1 = mysql.createPool(userDbConfig);
+  
+        pool1.getConnection((error, connection) => {
+          if (error) {
+            return res
+              .status(401)
+              .send({ error: "Error while connecting to the database", error });
+          }
+  
+          const userQuery = `SELECT id from user WHERE email = ?`;
+          connection.query(userQuery, [email], (error, result1) => {
+            if (error) {
+              console.error("Error retrieving user:", error);
+              return res
+                .status(500)
+                .json({ success: false, message: "Failed to retrieve user" });
+            }
+            const userId = result1[0].id;
+            console.log(userId);
+  
+            const query = `
               SELECT t.id, t.title, t.description, s.subtask_id, s.sub_task, s.status, s.color_code, s.custom_status
               FROM todo AS t
-              LEFT JOIN subTask AS s ON t.id = s.main_task_id
+              LEFT JOIN subtask AS s ON t.id = s.main_task_id
               WHERE t.user_id = ?
             `;
-
-        connection.query(query, [userId], (error, results) => {
-          if (error) {
-            console.error("Error retrieving tasks:", error);
-            return res
-              .status(500)
-              .json({ success: false, message: "Failed to retrieve tasks" });
-          }
-
-          const tasks = [];
-          results.forEach((row) => {
-            const {
-              id,
-              title,
-              description,
-              subtask_id,
-              sub_task,
-              status,
-              color_code,
-              custom_status,
-            } = row;
-            let task = tasks.find((task) => task.id === id);
-            if (!task) {
-              task = {
-                id,
-                title,
-                description,
-                subtasks: [],
-              };
-              tasks.push(task);
-            }
-            if (subtask_id) {
-              task.subtasks.push({
-                subtask_id,
-                sub_task,
-                status,
-                color_code,
-                custom_status,
+  
+            connection.query(query, [userId], (error, results) => {
+              if (error) {
+                console.error("Error retrieving tasks:", error);
+                return res
+                  .status(500)
+                  .json({ success: false, message: "Failed to retrieve tasks" });
+              }
+  
+              const tasks = [];
+              results.forEach((row) => {
+                const {
+                  id,
+                  title,
+                  description,
+                  subtask_id,
+                  sub_task,
+                  status,
+                  color_code,
+                  custom_status,
+                } = row;
+                let task = tasks.find((task) => task.id === id);
+                if (!task) {
+                  task = {
+                    id,
+                    title,
+                    description,
+                    subtasks: [],
+                  };
+                  tasks.push(task);
+                }
+                if (subtask_id) {
+                  task.subtasks.push({
+                    subtask_id,
+                    sub_task,
+                    status,
+                    color_code: color_code || 'default_color',
+                    custom_status: custom_status || 'custom_status',
+                  });
+                }
               });
-            }
+  
+              return res
+                .status(200)
+                .json({ message: "Tasks retrieved successfully", tasks });
+            });
           });
-
-          return res
-            .status(200)
-            .json({ message: "Tasks retrieved successfully", tasks });
         });
       });
-    });
-  } catch (err) {
-    return res.status(401).json({ error: "Something went wrong", err });
-  }
-};
+    } catch (err) {
+      return res.status(401).json({ error: "Something went wrong", err });
+    }
+  };
+  
 
 
 const handleDeleteTask = (req, res) => {
@@ -295,7 +309,7 @@ const handleDeleteSubtask = (req, res) => {
         }
 
         const deleteSubtaskQuery =
-          "DELETE FROM subTask WHERE main_task_id AND subtask_id = ?";
+          "DELETE FROM subtask WHERE main_task_id AND subtask_id = ?";
         connection.query(
           deleteSubtaskQuery,
           [maintaskId, taskId],
@@ -348,8 +362,7 @@ const handleUpdateSubtask = (req, res) => {
             .send({ error: "error while connecting to db", error });
         }
 
-        const updateSubtaskQuery =
-          "UPDATE subTask SET sub_task = ?, color_code = ?, custom_status = ?, status = ? WHERE main_task_id = ? AND subtask_id = ?";
+        const updateSubtaskQuery ="UPDATE subtask SET sub_task = ?, color_code = ?, custom_status = ?, status = ? WHERE main_task_id = ? AND subtask_id = ?";
         connection.query(
           updateSubtaskQuery,
           [sub_task, color_code, custom_status, status, maintaskId, taskId],
@@ -367,6 +380,7 @@ const handleUpdateSubtask = (req, res) => {
               return res.status(404).json({ message: "Subtask not found" });
             }
 
+            res.status(200).json({ message: "Subtask updated successfully",data:{...req.body,subtask_id:result} });
             const updatedObj = {
               sub_task, status, color_code, custom_status 
             };
@@ -374,7 +388,7 @@ const handleUpdateSubtask = (req, res) => {
             res.status(200).json({
               mes: "Subtask updated successfully",
               updatedObj: updatedObj,
-            });
+            })
           }
         );
       });
