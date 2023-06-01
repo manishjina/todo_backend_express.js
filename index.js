@@ -48,7 +48,7 @@ const server = app.listen(process.env.PORT||8090, async (err) => {
   } else {
     try {
       await connection(); // Connect to the database
-      console.log(process.env.PORT||8090);
+      console.log(process.env.PORT||8000);
     } catch (error) {
       console.log("Error while connecting to the database:", error);
       server.close();
