@@ -17,6 +17,7 @@ const { sendEmail } = require("./middleware/email&pass.sender");
 const { loginRouter } = require("./Routes/loginRoutes");
 const { validateAdmin } = require("./middleware/validateadmin");
 const { taskRouter } = require("./Routes/taskRoutes");
+const { notificationRouter } = require("./Routes/notificationRoutes");
 
 app.use(express.json());
 app.use(cors());
@@ -36,12 +37,12 @@ app.use(cookieParser());
 app.use("/task",taskRouter)
 app.use("/client", clientRoute);
 app.use("/user", usersRoute);
-
+app.use("/notification",notificationRouter)
 app.use("/todo", userTodoRoute);
 app.use("/bothlogin", loginRouter);
 
 // Create server and socket.io instance
-const server = app.listen(process.env.PORT||8090, async (err) => {
+const server = app.listen(8090, async (err) => {
   if (err) {
     console.log("inside server fuinction")
     console.log(err);
