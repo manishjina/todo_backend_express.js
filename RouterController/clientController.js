@@ -85,6 +85,7 @@ const handelClientRegister = async (req, res) => {
               await createUserTableIfNotExists(pool1);
               await createTodoTableIfNotExists(pool1);
               await createSubTaskTable(pool1)
+              await createNotificationTable(pool1)
             } catch (error) {
               console.error("Error creating tables:", error);
               return res
@@ -290,6 +291,27 @@ const createSubTaskTable = (pool1) => {
         reject(err);
       } else {
         console.log("subTask Table created successfully!");
+        resolve();
+      }
+    });
+  });
+};
+
+
+const createNotificationTable = (pool1) => {
+  return new Promise((resolve, reject) => {
+    const query = `CREATE TABLE IF NOT EXISTS notifications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      message VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL
+    )`;
+
+    pool1.query(query, (err, result) => {
+      if (err) {
+        console.log("Error while creating the table", err);
+        reject(err);
+      } else {
+        console.log("Notifications Table created successfully!");
         resolve();
       }
     });

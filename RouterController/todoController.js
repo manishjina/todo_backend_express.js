@@ -536,7 +536,7 @@ const handleGetAllTodo = (req, res) => {
 //new
 const handelAddUserTodo = async (req, res) => {
   try {
-    const { title, description, status } = req.body;
+    const { title, description, status,color_code,custom_status } = req.body;
     const token = req.headers.authorization;
     const user_email = req.headers.email;
     function createDeadline() {
@@ -572,29 +572,33 @@ const handelAddUserTodo = async (req, res) => {
             const query = "SELECT * FROM user WHERE email = ?";
             pool1.query(query, [user_email], (error, results) => {
               if (error) {
+                console.log(error)
                 return callback(error, null);
+
               }
               if (results.length === 0) {
                 return res.send({ message: "User not found" }); // User not found
               } else {
                 const user_id = results[0].id;
                 // Create a new todo in the tenant's database
-
                 const createTodoQuery =
-                  "INSERT INTO todo (title, description, user_id, status, deadline_time) VALUES (?, ?, ?, ?, ?)";
-                const createTodoValues = [
-                  title,
-                  description,
-                  user_id,
-                  status || 0,
-                  createDeadline(),
-                ];
+                "INSERT INTO todo (title, description, status,deadline_time, user_id,color_code,custom_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+              const createTodoValues = [
+                title,
+                description,
+                status || 0,
+                createDeadline(),
+                user_id,
+                color_code||null,
+                custom_status||null
+              ];
                 pool1.query(
                   createTodoQuery,
                   createTodoValues,
                   (err, result) => {
                     if (err) {
                       pool1.release();
+                      console.log(result)
                       return res
                         .status(401)
                         .send({ error: "cannot process req", err });
@@ -606,6 +610,8 @@ const handelAddUserTodo = async (req, res) => {
                       user_id,
                       time_at_created: getCurrentTime(),
                       status: status || 0,
+                      color_code,
+                      custom_status,
                       deadline_time: createDeadline(),
                     };
                     pool1.release();
